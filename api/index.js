@@ -21,30 +21,10 @@ app.use(cors({
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 60000,
 })
 .then(() => console.log("MongoDB Connected"))
 .catch((err) => console.error("MongoDB Connection Error:", err));
-
-// Schema & Model
-// const FormSchema = new mongoose.Schema({
-//   name: { type: String, required: true },
-//   email: { type: String, required: true, match: /.+\@.+\..+/ },
-//   phone: { type: String, required: true, match: /^[0-9]{10,15}$/ },
-//   message: { type: String },
-//   websiteName: { type: String, required: true },
-//   submittedAt: { type: Date, default: Date.now },
-
-//   // 🔁 Make readBy accept numbers (userId from Prisma)
-//   readBy: [{ type: Number }],
-// });
-
-// const FormModel = mongoose.model("FormSubmission", FormSchema);
-
-// ➕ Submit new form
-
 app.use("/api", formRoutes )
 app.use("/api", bookRoutes )
 // 🔍 Get all leads and mark if read by user
