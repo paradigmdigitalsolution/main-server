@@ -1,4 +1,3 @@
-// db.js
 import mongoose from "mongoose";
 
 let isConnected = false;
@@ -12,7 +11,7 @@ export async function connectToDB() {
       await mongoose.connect(process.env.MONGO_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 30000,  // Timeout after 30 seconds if DB isn't available
+        serverSelectionTimeoutMS: 30000, // Timeout after 30 seconds
       });
       isConnected = true;
       console.log("✅ MongoDB Connected");
