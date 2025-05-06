@@ -4,7 +4,7 @@ import { connectToDB } from "../db.js";
 import FormModel from "../model/formSubmission.js";
 const router = Router()
 
-router.post("/submit", async (req, res) => {
+router.post("/submit-form", async (req, res) => {
     try {
       await connectToDB(); // 👈 Ensure connection before insert
   
