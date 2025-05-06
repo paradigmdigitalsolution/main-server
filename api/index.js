@@ -49,8 +49,22 @@ app.use(
 );
 
 // Routes
-app.use("/api", formRoutes);
-app.use("/api", bookRoutes);
+connectToDB()
+.then(() => {
+  console.log("✅ DB connected and server is ready");
+
+  // Routes
+  app.use("/api", formRoutes);
+  app.use("/api", bookRoutes);
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+})
+.catch((err) => {
+  console.error("❌ Error connecting to DB:", err);
+  process.exit(1); // Exit the process if DB connection fails
+});
 
 // 🔍 Get all leads and mark if read by user
 app.get("/get-leads/:userId", async (req, res) => {
