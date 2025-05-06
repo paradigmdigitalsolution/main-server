@@ -1,34 +1,54 @@
-// ✅ FIXED BACKEND FOR NUMBER-BASED `userId`
-
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
-import formRoutes from "./routes/formRoutes.js"
-import bookRoutes from "./routes/bookRoutes.js"
-import FormModel from "./model/formSubmission.js"
+import formRoutes from "./routes/formRoutes.js";
+import bookRoutes from "./routes/bookRoutes.js";
+import FormModel from "./model/formSubmission.js";
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ MongoDB connection (inline and cached)
+let isConnected = false;
+
+async function connectToDB() {
+  if (isConnected) return;
+
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 2000000,
+    });
+    isConnected = true;
+    console.log("✅ MongoDB Connected");
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error);
+  }
+}
+
 // Middleware
 app.use(express.json());
-app.use(cors({
-  origin: ["http://localhost:3000", "http://192.168.18.47:3000", "http://localhost/smtp-periodic/"],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://192.168.18.47:3000",
+      "http://localhost/smtp-periodic/",
+    ],
+    credentials: true,
+  })
+);
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 60000,
-})
-.then(() => console.log("MongoDB Connected"))
-.catch((err) => console.error("MongoDB Connection Error:", err));
-app.use("/api", formRoutes )
-app.use("/api", bookRoutes )
+// Routes
+app.use("/api", formRoutes);
+app.use("/api", bookRoutes);
+
 // 🔍 Get all leads and mark if read by user
 app.get("/get-leads/:userId", async (req, res) => {
+  await connectToDB();
+
   try {
     const userId = parseInt(req.params.userId);
     const forms = await FormModel.find().sort({ submittedAt: -1 });
@@ -47,6 +67,8 @@ app.get("/get-leads/:userId", async (req, res) => {
 
 // 🔢 Unread count for this user
 app.get("/unread-count/:userId", async (req, res) => {
+  await connectToDB();
+
   try {
     const userId = parseInt(req.params.userId);
 
@@ -61,23 +83,25 @@ app.get("/unread-count/:userId", async (req, res) => {
   }
 });
 
-// ✅ Mark single lead as read
+// ✅ Mark single or all leads as read
 app.patch("/mark-read/:id", async (req, res) => {
-  const { id } = req.params; // could be a form ID or "all"
+  await connectToDB();
+
+  const { id } = req.params;
   const { userId } = req.body;
 
   try {
     if (id === "all") {
-      // Mark all forms as read for this user
       await FormModel.updateMany(
-        { readBy: { $ne: userId } }, // only those that haven't been read
+        { readBy: { $ne: userId } },
         { $push: { readBy: userId } }
       );
 
-      return res.status(200).json({ success: true, message: "All marked as read" });
+      return res
+        .status(200)
+        .json({ success: true, message: "All marked as read" });
     }
 
-    // Otherwise, mark single form as read
     const form = await FormModel.findById(id);
     if (!form) return res.status(404).json({ error: "Form not found" });
 
@@ -93,6 +117,8 @@ app.patch("/mark-read/:id", async (req, res) => {
   }
 });
 
-
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
 
 export default app;
